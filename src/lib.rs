@@ -121,7 +121,7 @@ macro_rules! lambda_cube {
                 use self::StarAndBox::*;
                 let mut map = HashMap::new();
                 $(map.insert(($rule_s1, $rule_s2), $rule_s3));
-				*;
+                *;
                 map
             }
         }
@@ -499,5 +499,5 @@ mod tests {
             );
         assert_eq!(id().type_check().unwrap(), ty);
     }
-	
+    
 }
