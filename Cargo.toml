@@ -1,0 +1,8 @@
+[package]
+name = "pts"
+version = "0.0.1"
+authors = ["Andy Shiue <andyshiue851019@gmail.com>"]
+
+[dependencies]
+log = "0.3"
+env_logger = "0.3"
