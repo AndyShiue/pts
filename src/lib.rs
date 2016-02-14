@@ -97,32 +97,35 @@ impl Display for StarAndBox {
 }
 
 pub trait PureTypeSystem: Clone + Debug {
-    type Sort: Clone + Debug + Display + Eq + Hash;
-    fn axioms() -> HashMap<Self::Sort, Self::Sort>;
-    fn rules() -> HashMap<(Self::Sort, Self::Sort), Self::Sort>;
+    type Sort: Copy + Clone + Debug + Display + Eq + Hash;
+    fn axiom(sort: Self::Sort) -> Option<Self::Sort>;
+    fn rule(s1: Self::Sort, s2: Self::Sort) -> Option<Self::Sort>;
 }
 
 macro_rules! lambda_cube {
     ($name: ident;
-     $($rule_s1: expr, $rule_s2: expr => $rule_s3: expr),*) => {
+     $($rule_s1: pat, $rule_s2: pat => $rule_s3: expr),*) => {
 
         #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
         pub struct $name;
 
         impl PureTypeSystem for $name {
             type Sort = StarAndBox;
-            fn axioms() -> HashMap<StarAndBox, StarAndBox> {
+            fn axiom(sort: StarAndBox) -> Option<StarAndBox> {
                 use self::StarAndBox::*;
-                let mut map = HashMap::new();
-                map.insert(Star, Box);
-                map
+                match sort {
+					Star => Some(Box),
+					Box => None,
+				}
             }
-            fn rules() -> HashMap<(StarAndBox, StarAndBox), StarAndBox> {
+            fn rule(s1: StarAndBox, s2: StarAndBox) -> Option<StarAndBox> {
                 use self::StarAndBox::*;
-                let mut map = HashMap::new();
-                $(map.insert(($rule_s1, $rule_s2), $rule_s3));
-                *;
-                map
+				match (s1, s2) {
+					// The `if true` here is a small hack.
+					// Removing it makes `_` an unreachable pattern.
+					$(($rule_s1, $rule_s2) if true => Some($rule_s3),)*
+					_ => None,
+				}
             }
         }
     
@@ -206,24 +209,25 @@ impl<System: PureTypeSystem> Term<System> {
                     let right_kind = try!(right.type_check_with_context(new_context)
                                                .map(Term::whnf));
                     if let Sort(right_sort) = right_kind {
-                        let rules = System::rules();
-                        let new_sort = rules.get(&(left_sort.clone(), right_sort.clone()));
+                        let new_sort = System::rule(left_sort.clone(), right_sort.clone());
                         match new_sort {
                             Some(sort) => return Ok(Sort(sort.clone())),
                             None =>  {
                                 let error_message =
                                     format!("Rule ({}, {}, _) doesn't exist.",
                                             left_sort, right_sort);
-                                return Err(error_message)
+                                Err(error_message)
                             }
                         }
-                    }
-                    return Err(format!("Type {} isn't inhabited", right))
-                }
-                return Err(format!("Type {} isn't inhabited", left))
-            }
+                    } else {
+						Err(format!("Type {} isn't inhabited", right))
+					}
+				} else {
+					Err(format!("Type {} isn't inhabited", left))
+				}
+			}
             Sort(sort) => {
-                match System::axioms().get(&sort) {
+                match System::axiom(sort) {
                     Some(new_sort) => Ok(Sort(new_sort.clone())),
                     None => Err(format!("Sort {} doesn't have a super-sort.", sort)),
                 }
