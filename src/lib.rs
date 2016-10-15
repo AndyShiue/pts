@@ -107,7 +107,7 @@ impl Display for StarAndBox {
 // 1. Its sort, this is represent as an associated type.
 // 2. `axiom`, which is a function from any sort to its super-sort.
 //    It returns an `Option` because some sort may not belong to any other sorts,
-//    ie. it's already the largest sort in the system.
+//    i.e. it's already the largest sort in the system.
 // 3. `rule`, the purpose of this function is to specify the type of a function from the type of
 //    its argument and its return type.
 //    If a function has type T1 -> T2, the type of T1 is s1 and the type of T2 is s2,
