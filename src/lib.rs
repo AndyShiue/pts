@@ -31,13 +31,8 @@ impl<System: PureTypeSystem> Display for Term<System> {
         use Term::*;
         match *self {
             Var(Symbol(ref str)) => write!(f, "{}", str),
-            App(ref left, ref right) => {
-                match **right {
-                    Var(_) | Sort(_) => write!(f, "{} {}", left, right),
-                    _ => write!(f, "{} ({})", left, right),
-                }
-            }
-            Lam(ref bound, ref ty, ref inner) => write!(f, "\\{}: {}. {}", bound, ty, inner),
+            App(ref left, ref right) => write!(f, "({} {})", left, right),
+            Lam(ref bound, ref ty, ref inner) => write!(f, "(\\{}: {}. {})", bound, ty, inner),
             Pi(ref bound, ref left, ref right) => write!(f, "({}: {}) -> {}", bound, left, right),
             Sort(ref sort) => write!(f, "{}", sort),
         }
@@ -103,7 +98,7 @@ impl Display for StarAndBox {
 }
 
 // The trait classifying a pure type system.
-// It consist of 3 things, respectively:
+// It consists of 3 things, respectively:
 // 1. Its sort, this is represent as an associated type.
 // 2. `axiom`, which is a function from any sort to its super-sort.
 //    It returns an `Option` because some sort may not belong to any other sorts,
@@ -211,7 +206,7 @@ impl<System: PureTypeSystem> Term<System> {
             App(left, right) => {
                 // First see if the left hand side type checks.
                 let left_ty = try!(left.type_check_with_context(context.clone()));
-                // If left_ty isn't a function in its `whnf` form, output an error.---------------+
+                // If `left_ty` isn't a function in its `whnf` form, output an error.-------------+
                 match left_ty.whnf() {                                                       //   |
                     Pi(bound, ty_in, ty_out) => {                                            //   |
                         // Let's then type check the right hand side.                             |
@@ -221,7 +216,7 @@ impl<System: PureTypeSystem> Term<System> {
                         // the `Pi` type, substitute the return type with the right hand side.    |
                         // The return type can have free occurences of the bound variable because |
                         // now we are working with dependent types.                               |
-                        if !right_ty.beta_eq(&ty_in) {                                       //   |
+                        if right_ty.beta_eq(&ty_in) {                                       //   |
                             Ok(ty_out.substitute(&bound, &right))                            //   |
                         } else {                                                             //   |
                             // If the types doesn't match, return an error.                       |
@@ -374,8 +369,8 @@ impl<System: PureTypeSystem> Term<System> {
                             }
                             // If `should_be_unused` literally aren't used ...
                             else {
-                                // We change the symbols of the lambda from the clashed one to the
-                                // unused one.
+                                // We change the symbols of the lambda from the clashed ones to the
+                                // unused ones.
                                 let renamed =
                                     Lam(should_be_unused.clone(),
                                         Box::new(ty.clone()
@@ -423,7 +418,7 @@ impl<System: PureTypeSystem> Term<System> {
                     }
                 }
             }
-            // If it's a sort, we do nothing.
+            // If it's a sort, we don't need to do anything.
             this @ Sort(_) => this,
         }
     }
@@ -447,8 +442,8 @@ impl<System: PureTypeSystem> Term<System> {
                     let mut new_stack: Vec<Term<S>> = (*stack).into();
                     // Unwrapping here after popping is safe because `stack` isn't empty.
                     let right = new_stack.pop().unwrap();
-                    // We just need to substitite.
-                    inner.clone().substitute(&from, &right)
+                    // We just need to substitite and go forward.
+                    spine(inner.clone().substitute(&from, &right), &new_stack)
                 }
                 // We simply build the term again if we encounter anything else.
                 (leftmost, _) =>
@@ -465,6 +460,7 @@ impl<System: PureTypeSystem> Term<System> {
     pub fn nf(self) -> Term<System> {
         use self::Term::*;
         fn spine<S: PureTypeSystem>(leftmost: Term<S>, stack: &[Term<S>]) -> Term<S> {
+            println!("{} | {:?}", leftmost, stack);
             match (leftmost, stack) {
                 // The same as above.
                 (App(left, right), _) => {
@@ -481,7 +477,7 @@ impl<System: PureTypeSystem> Term<System> {
                     let mut new_stack: Vec<Term<S>> = (*stack).into();
                     // Unwrapping here after popping is safe because `stack` isn't empty.
                     let right = new_stack.pop().unwrap();
-                    inner.clone().substitute(&from, &right)
+                    spine(inner.clone().substitute(&from, &right), &new_stack)
                 }
                 // If we hit a `Pi`, we recurse everywhere and build the term again.
                 (Pi(ref bound, ref left, ref inner), ref stack) =>
@@ -490,7 +486,7 @@ impl<System: PureTypeSystem> Term<System> {
                                                 Box::new(inner.clone().nf())),
                                |l, r| app!(l, r.clone().nf())),
                 // We simply build the term again if we encounter anything else.
-                // Oh, no we also recurse on the right hand side.
+                // Oh, now we also recurse on the right hand side.
                 (leftmost, _) =>
                     stack.iter()
                          .fold(leftmost, |l, r| app!(l, r.clone().nf())),
@@ -499,6 +495,7 @@ impl<System: PureTypeSystem> Term<System> {
         spine(self, &[])
     }
 
+    // Alpha equality between types.
     pub fn alpha_eq(&self, another: &Term<System>) -> bool {
         use self::Term::*;
         match (self, another) {
@@ -516,6 +513,9 @@ impl<System: PureTypeSystem> Term<System> {
         }
     }
 
+    // Beta equality between types.
+    // To know 2 terms are beta equal, all you have to do is to make sure their `nf`s are alpha
+    // equal.
     pub fn beta_eq(&self, another: &Term<System>) -> bool {
         self.clone().nf().alpha_eq(&another.clone().nf())
     }
@@ -528,12 +528,14 @@ mod tests {
     use super::*;
     use super::StarAndBox::Star;
 
+    // x == x
     #[test]
     fn alpha_eq_var() {
         let input: Term<Coc> = var!("x");
         assert!(input.alpha_eq(&var!("x")))
     }
 
+    // x != y
     #[test]
     #[should_panic]
     fn alpha_neq_var() {
@@ -541,6 +543,7 @@ mod tests {
         assert!(input.alpha_eq(&var!("y")))
     }
 
+    // \x: y. x == \a: y. a
     #[test]
     fn alpha_eq_lam() {
         let left: Term<Coc> = lam!("x", var!("y"), var!("x"));
@@ -548,12 +551,13 @@ mod tests {
         assert!(left.alpha_eq(&right))
     }
 
+    // (\x: y -> y. x)(\x: y. x) == (\a: y -> y. a)(\b: y. b)
     #[test]
     fn alpha_eq_app() {
         let left: Term<Coc> =
             app!(
                 lam!(
-                    "x", var!("y"),
+                    "x", arrow!(var!("y"), var!("y")),
                     var!("x")
                 ),
                 lam!(
@@ -564,7 +568,7 @@ mod tests {
         let right =
             app!(
                 lam!(
-                    "a", var!("y"),
+                    "a", arrow!(var!("y"), var!("y")),
                     var!("a")
                 ),
                 lam!(
@@ -575,6 +579,7 @@ mod tests {
         assert!(left.alpha_eq(&right))
     }
 
+    // (a: *) -> a == (b: *) -> b
     #[test]
     fn alpha_eq_pi() {
         let left: Term<Coc> =
@@ -590,6 +595,7 @@ mod tests {
         assert!(left.clone().alpha_eq(&right))
     }
 
+    // id = \a: *. \x: a. x
     fn id() -> Term<Coc> {
         lam!(
             "a", sort!(Star),
@@ -600,6 +606,7 @@ mod tests {
         )
     }
 
+    // id: (a: *) -> a -> a
     #[test]
     fn id_type_checks() {
         let ty: Term<Coc> =
@@ -611,6 +618,76 @@ mod tests {
                 )
             );
         assert_eq!(id().type_check().unwrap(), ty);
+    }
+
+    // This function turns a unsigned number into a boolean numeral.
+    fn church_nat(n: u32) -> Term<Coc> {
+        let mut onion = var!("x");
+        for _ in 0..n {
+            onion = app!(var!("f"), onion)
+        }
+        lam!("t", sort!(Star),
+            lam!(
+                "f", arrow!(var!("t"), var!("t")),
+                lam!(
+                    "x", var!("t"),
+                    onion
+                )
+            )
+        )
+    }
+
+    fn nat_type() -> Term<Coc> {
+        pi!("t", sort!(Star),
+            arrow!(
+                arrow!(var!("t"), var!("t")),
+                arrow!(var!("t"), var!("t"))
+            )
+        )
+    }
+
+    #[test]
+    fn church_nat_type_checks() {
+        let meaning_of_life: Term<Coc> = church_nat(42).type_check().unwrap();
+        assert!(meaning_of_life.beta_eq(&nat_type()));
+    }
+
+    fn plus(l: Term<Coc>, r: Term<Coc>) -> Term<Coc> {
+        lam!(
+            "t", sort!(Star),
+            lam!(
+                "f", arrow!(var!("t"), var!("t")),
+                lam!(
+                    "x", var!("t"),
+                    app!(
+                        app!(
+                            app!(
+                                l,
+                                var!("t")
+                            ),
+                            var!("f")
+                        ),
+                        app!(
+                            app!(
+                                app!(
+                                    r,
+                                    var!("t")
+                                ),
+                                var!("f")
+                            ),
+                            var!("x")
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    #[test]
+    fn plus_check() {
+        let two: Term<Coc> = church_nat(2);
+        let three = church_nat(3);
+        assert!(plus(two, three).beta_eq(&church_nat(5)));
     }
 
 }
