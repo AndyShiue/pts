@@ -620,7 +620,7 @@ mod tests {
         assert_eq!(id().type_check().unwrap(), ty);
     }
 
-    // This function turns a unsigned number into a boolean numeral.
+    // This function turns a unsigned number into a Church numeral.
     fn church_nat(n: u32) -> Term<Coc> {
         let mut onion = var!("x");
         for _ in 0..n {
