@@ -216,7 +216,7 @@ impl<System: PureTypeSystem> Term<System> {
                         // the `Pi` type, substitute the return type with the right hand side.    |
                         // The return type can have free occurences of the bound variable because |
                         // now we are working with dependent types.                               |
-                        if right_ty.beta_eq(&ty_in) {                                       //   |
+                        if right_ty.beta_eq(&ty_in) {                                        //   |
                             Ok(ty_out.substitute(&bound, &right))                            //   |
                         } else {                                                             //   |
                             // If the types doesn't match, return an error.                       |
