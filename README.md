@@ -1,6 +1,7 @@
 # pts
 
 This is the implementation of *pure type systems* written in Rust.
+It's basically a rewrite from the Haskell version, [Simpler, Easier](http://augustss.blogspot.tw/2007/10/simpler-easier-in-recent-paper-simply.html)
 
 ---
 
