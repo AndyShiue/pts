@@ -637,6 +637,7 @@ mod tests {
         )
     }
 
+    // The type of church numerals.
     fn nat_type() -> Term<Coc> {
         pi!("t", sort!(Star),
             arrow!(
@@ -645,13 +646,16 @@ mod tests {
             )
         )
     }
-
+    
+    // `nat_type()` actually **is** the type of a church numeral
     #[test]
     fn church_nat_type_checks() {
         let meaning_of_life: Term<Coc> = church_nat(42).type_check().unwrap();
         assert!(meaning_of_life.beta_eq(&nat_type()));
     }
 
+    // Summing up 2 church numerals.
+    // plus(l, r) = \t: *. \f: t -> t. \x: t. l t f (r t f x)
     fn plus(l: Term<Coc>, r: Term<Coc>) -> Term<Coc> {
         lam!(
             "t", sort!(Star),
@@ -683,6 +687,7 @@ mod tests {
         )
     }
 
+    // Check that plus(2, 3) equals 5.
     #[test]
     fn plus_check() {
         let two: Term<Coc> = church_nat(2);
