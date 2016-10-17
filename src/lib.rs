@@ -106,7 +106,7 @@ impl Display for StarAndBox {
 // 3. `rule`, the purpose of this function is to specify the type of a function from the type of
 //    its argument and its return type.
 //    If a function has type T1 -> T2, the type of T1 is s1 and the type of T2 is s2,
-//    then the type of the whole function is rule(s_1, s_2).
+//    then the type of the whole function is rule(s1, s2).
 //    Again, `rule` returns an `Option` because the function type isn't always well-formed.
 pub trait PureTypeSystem: Clone + Debug {
     type Sort: Copy + Clone + Debug + Display + Eq + Hash;
