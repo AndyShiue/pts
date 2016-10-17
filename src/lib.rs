@@ -344,7 +344,7 @@ impl<System: PureTypeSystem> Term<System> {
                 }
                 // If it doesn't ...
                 else {
-                    // If the bound variable isn't occured in `to`, then we simply go on
+                    // If the bound variable doesn't occur in `to`, then we simply go on
                     // recursively.
                     if !to.free_vars().contains(bound) {
                         Lam(bound.clone(), Box::new(ty.clone().substitute(from, to)),
