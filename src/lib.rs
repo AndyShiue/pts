@@ -367,7 +367,7 @@ impl<System: PureTypeSystem> Term<System> {
                             if used.contains(&should_be_unused) {
                                 should_be_unused.0.push_str("'")
                             }
-                            // If `should_be_unused` literally aren't used ...
+                            // If `should_be_unused` literally isn't used ...
                             else {
                                 // We change the symbols of the lambda from the clashed ones to the
                                 // unused ones.
