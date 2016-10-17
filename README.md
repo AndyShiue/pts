@@ -1,5 +1,7 @@
 # PTS (Pure Type Systems)
 
+[![Build Status](https://travis-ci.org/AndyShiue/pts.svg?branch=master)](https://travis-ci.org/AndyShiue/pts)
+
 This is an implementation of *pure type systems* written in Rust.
 It's basically a rewrite from the Haskell version, [Simpler, Easier!](http://augustss.blogspot.tw/2007/10/simpler-easier-in-recent-paper-simply.html)
 
