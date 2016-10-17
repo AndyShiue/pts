@@ -18,7 +18,7 @@ Installation:
 ---
 
 Originally, lambda calculus is invented to be a Turing-complete model of computation.
-Subsequent works add type systems on top of the lambda calculus, usually making it **not** Turing-complete, but stronger type systems leads to the ability to write mathematical proofs in it.
+Subsequent works add type systems on top of the lambda calculus, usually making it **not** Turing-complete, but stronger type systems lead to the ability to write mathematical proofs in it.
 Pure type systems are a generalization of the lambda cube, which consists of the simply typed lambda calculus, system F, calculus of constructions, etc.
 In this implementation, you can define your own pure type systems, consisting one or more, or even infinite sorts.
 Currently, this project can only be used as a library, not an application, because I haven't dealt with parsing stuff.
