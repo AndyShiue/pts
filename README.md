@@ -15,7 +15,7 @@ Installation:
 
 3. Navigate to the root of the project: `cd pts`
 
-4. Run `cargo test` to run all the tests in the project. It might takes some time.
+4. Run `cargo test` to run all the tests in the project. It might take some time.
 
 ---
 
