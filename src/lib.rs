@@ -205,13 +205,12 @@ impl<System: PureTypeSystem> Term<System> {
             // If I hit an application ...
             App(left, right) => {
                 // First see if the left hand side type checks.
-                let left_ty = try!(left.type_check_with_context(context.clone()));
+                let left_ty = left.type_check_with_context(context.clone())?;
                 // If `left_ty` isn't a function in its `whnf` form, output an error.-------------+
                 match left_ty.whnf() {                                                       //   |
                     Pi(bound, ty_in, ty_out) => {                                            //   |
                         // Let's then type check the right hand side.                             |
-                        let right_ty = try!(right.clone()                                    //   |
-                                                 .type_check_with_context(context.clone())); //   |
+                        let right_ty = right.clone().type_check_with_context(context.clone())?; //|
                         // If the type of the right hand side matches the type of the argument of |
                         // the `Pi` type, substitute the return type with the right hand side.    |
                         // The return type can have free occurences of the bound variable because |
@@ -235,29 +234,29 @@ impl<System: PureTypeSystem> Term<System> {
             // If I hit a lambda ...
             Lam(bound, ty, inner) => {
                 // Check if the type of the argument is well-formed, if it is, proceed ...
-                try!(ty.clone().type_check_with_context(context.clone()));
+                ty.clone().type_check_with_context(context.clone())?;
                 let mut new_context = context;
                 // Insert the bound variable into the new context.
                 new_context.insert(bound.clone(), *ty.clone());
                 // And type check the right hand side of the lambda with the new context.
-                let inner_type = try!(inner.type_check_with_context(new_context));
+                let inner_type = inner.type_check_with_context(new_context)?;
                 Ok(Pi(bound, ty, Box::new(inner_type)))
             }
             // If I hit a `Pi` ...
             Pi(bound, left, right) => {
                 // First, type check the type of the bound variable.
                 // It must be a `Sort`, otherwise output an error.
-                if let Sort(left_sort) = try!(left.clone()
-                                                  .type_check_with_context(context.clone())
-                                                  .map(Term::whnf)) {
+                if let Sort(left_sort) = left.clone()
+                                             .type_check_with_context(context.clone())
+                                             .map(Term::whnf)? {
                     // Create a new context, the same as what we did in the case of `Lam`.
                     let mut new_context = context;
                     // Insert the bound variable.
                     new_context.insert(bound, *left);
                     // type check the right hand side of the `Pi` with the new context.
-                    let right_kind = try!(right.clone()
-                                               .type_check_with_context(new_context)
-                                               .map(Term::whnf));
+                    let right_kind = right.clone()
+                                          .type_check_with_context(new_context)
+                                          .map(Term::whnf)?;
                     // Again, check if the type of the return type is a `Sort`.
                     if let Sort(right_sort) = right_kind {
                         // Call `rule` to get the type of the whole function type.
