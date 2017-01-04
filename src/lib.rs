@@ -338,9 +338,10 @@ impl<System: PureTypeSystem> Term<System> {
             App(left, right) => app!(left.substitute(from, to), right.substitute(from, to)),
             // If we hit a lambda, hmmmmm, it's a hard case.
             Lam(ref bound, ref ty, ref inner) => {
-                // If the bound variable coincide with `from`, we can simply leave thing untouched.
+                // If the bound variable coincide with `from`, we just need to substitite in its
+                // type.
                 if bound == from {
-                    self.clone()
+                    Lam(bound.clone(), Box::new(ty.clone().substitute(from, to)), inner.clone())
                 }
                 // If it doesn't ...
                 else {
@@ -389,7 +390,7 @@ impl<System: PureTypeSystem> Term<System> {
             // I copy-pasted the code for the sake of not overengineering.
             Pi(ref bound, ref left, ref right) => {
                 if bound == from {
-                    self.clone()
+                    Pi(bound.clone(), Box::new(left.clone().substitute(from, to)), right.clone())
                 } else {
                     if !to.free_vars().contains(bound) {
                         Pi(bound.clone(), Box::new(left.clone().substitute(from, to)),
@@ -595,6 +596,27 @@ mod tests {
         assert!(left.clone().alpha_eq(&right))
     }
 
+    #[test]
+    fn substitute_type() {
+        let left: Term<Coc> =
+            app!(
+                lam!(
+                    "x", sort!(Star),
+                    lam!(
+                        "x", var!("x"),
+                        var!("x")
+                    )
+                ),
+                var!("y")
+            );
+        let right: Term<Coc> =
+            lam!(
+                "x", var!("y"),
+                var!("x")
+            );
+        assert!(left.beta_eq(&right));
+    }
+
     // id = \a: *. \x: a. x
     fn id() -> Term<Coc> {
         lam!(
@@ -646,7 +668,7 @@ mod tests {
             )
         )
     }
-    
+
     // `nat_type()` actually **is** the type of a church numeral
     #[test]
     fn church_nat_type_checks() {
