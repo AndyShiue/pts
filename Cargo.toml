@@ -4,5 +4,11 @@ version = "0.0.1"
 authors = ["Andy Shiue <andyshiue851019@gmail.com>"]
 
 [dependencies]
-log = "0.3"
-env_logger = "0.3"
+log = "^0.3"
+env_logger = "^0.3"
+macro-attr = "^0.2"
+enum_derive = "^0.1"
+
+[dependencies.nom]
+version = "^2.0"
+features = ["verbose-errors"]
