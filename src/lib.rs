@@ -460,7 +460,6 @@ impl<System: PureTypeSystem> Term<System> {
     pub fn nf(self) -> Term<System> {
         use self::Term::*;
         fn spine<S: PureTypeSystem>(leftmost: Term<S>, stack: &[Term<S>]) -> Term<S> {
-            println!("{} | {:?}", leftmost, stack);
             match (leftmost, stack) {
                 // The same as above.
                 (App(left, right), _) => {
