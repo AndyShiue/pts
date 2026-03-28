@@ -243,12 +243,12 @@ impl<System: PureTypeSystem> Term<System> {
                 let mut new_context = context;
                 // Insert the bound variable.
                 new_context.insert(bound.clone(), *left.clone());
-                // type check the right hand side of the `Pi` with the new context.
-                let right_kind = right
-                    .type_check_with_context(new_context)
-                    .map(|t| t.whnf())?;
 
-                let Term::Sort(right_sort) = right_kind else {
+                // type check the right hand side of the `Pi` with the new context.
+                let Term::Sort(right_sort) = right
+                    .type_check_with_context(new_context)
+                    .map(|t| t.whnf())?
+                else {
                     return Err(format!("Type {} isn't inhabited.", right));
                 };
 
@@ -401,12 +401,12 @@ impl<System: PureTypeSystem> Term<System> {
                         )
                     } else {
                         let mut should_be_unused: Symbol = bound.clone();
-                        should_be_unused.0.push_str("'");
+                        should_be_unused.0.push('\'');
                         let used: HashSet<&Symbol> =
                             right.free_vars().union(&to.free_vars()).copied().collect();
                         loop {
                             if used.contains(&should_be_unused) {
-                                should_be_unused.0.push_str("'")
+                                should_be_unused.0.push('\'')
                             } else {
                                 let renamed = Term::Pi(
                                     should_be_unused.clone(),
