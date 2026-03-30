@@ -449,7 +449,7 @@ impl<System: PureTypeSystem> Term<System> {
                     spine(inner.substitute(from, &right), stack)
                 }
                 // We simply build the term again if we encounter anything else.
-                leftmost => stack.into_iter().fold(leftmost, |l, r| app!(l, r)),
+                leftmost => stack.into_iter().rev().fold(leftmost, |l, r| app!(l, r)),
             }
         }
         spine(self.clone(), Vec::new())
@@ -483,7 +483,7 @@ impl<System: PureTypeSystem> Term<System> {
                 ),
                 // We simply build the term again if we encounter anything else.
                 // Oh, now we also recurse on the right hand side.
-                leftmost => stack.into_iter().fold(leftmost, |l, r| app!(l, r.nf())),
+                leftmost => stack.into_iter().rev().fold(leftmost, |l, r| app!(l, r.nf())),
             }
         }
         spine(self.clone(), Vec::new())
@@ -649,5 +649,18 @@ mod tests {
         let two: Term<Coc> = church_nat(2);
         let three = church_nat(3);
         assert!(plus(two, three).beta_eq(&church_nat(5)));
+    }
+
+    // (x a b) is already in normal form — nf should return it unchanged
+    #[test]
+    fn open_term_nf() {
+        let term: Term<Coc> = app!(app!(var!("x"), var!("a")), var!("b"));
+        assert!(term.nf().beta_eq(&term));
+    }
+
+    #[test]
+    fn open_term_whnf() {
+        let term: Term<Coc> = app!(app!(var!("x"), var!("a")), var!("b"));
+        assert!(term.whnf().beta_eq(&term));
     }
 }
